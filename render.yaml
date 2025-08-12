@@ -1,32 +1,31 @@
 services:
   - type: web
     name: n8n
-    env: docker
     plan: free
-    region: singapore
-    dockerfilePath: ./Dockerfile
+    runtime: image
+    image:
+      url: docker.io/n8nio/n8n:latest
     healthCheckPath: /healthz
     autoDeploy: false
     envVars:
+      # --- n8n basics ---
       - key: GENERIC_TIMEZONE
         value: Asia/Bangkok
       - key: N8N_LOG_LEVEL
         value: info
-      - key: N8N_PORT
-        value: "5678"
       - key: N8N_PROTOCOL
         value: https
-      # (แนะนำเปิด Basic Auth เพื่อป้องกัน UI)
+      # Protect the UI
       - key: N8N_BASIC_AUTH_ACTIVE
         value: "true"
       - key: N8N_BASIC_AUTH_USER
         value: admin
       - key: N8N_BASIC_AUTH_PASSWORD
         generateValue: true
-      # ใช้สำหรับเข้ารหัส Credentials ใน n8n (ต้องมีถึงจะบันทึก Credentials ได้)
+      # Required to save credentials
       - key: N8N_ENCRYPTION_KEY
         generateValue: true
-      # ---- Database (Render Free Postgres) ----
+      # --- Database: Render Postgres (free) ---
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_HOST
@@ -49,8 +48,12 @@ services:
         fromDatabase:
           name: n8n-db
           property: password
-      # ตั้งค่าภายนอก (ถ้าต้องการให้ n8n สร้างลิงก์ Webhook ถูกต้อง)
-      # สร้างหลังจากรู้โดเมนจริงแล้ว หรือแก้ไขใน Dashboard:
+      # SSL helps with hosted Postgres; disable strict CA to avoid cert issues
+      - key: DB_POSTGRESDB_SSL_ENABLED
+        value: "true"
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+      # Set this AFTER first deploy to your actual URL, e.g. https://n8n-xyz.onrender.com/
       # - key: WEBHOOK_URL
       #   value: https://<your-app>.onrender.com/
 databases:
